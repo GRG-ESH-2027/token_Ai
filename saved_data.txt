@@ -1,0 +1,2 @@
+{'x_select': '1205\n', 'y_select': '687\n', 'x_sign': '805\n', 'y_sign': '559\n', 'x_pass': '670\n', 'y_pass': '436\n', 'password': '72204742\n', 'x_serach': '844\n', 'y_serach': '641\n'}
+{'x_select': '1204', 'y_select': '687\n', 'x_sign': '805\n', 'y_sign': '559\n', 'x_pass': '670\n', 'y_pass': '436\n', 'password': '72204742\n', 'x_serach': '844\n', 'y_serach': '641\n'}

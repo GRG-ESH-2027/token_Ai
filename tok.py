@@ -1,0 +1,209 @@
+import os
+import pyautogui
+import time
+import tkinter as tk
+from tkinter import messagebox
+import threading
+import pygetwindow as gw
+
+running = False
+
+def start_process():
+    global running
+    running = True
+    selected_browser = browser_choice.get()
+    # البحث عن أي نافذة تحتوي على اسم المتصفح
+    all_windows = gw.getAllTitles()
+    target_windows = [w for w in all_windows if selected_browser.lower() in w.lower()]
+    
+    if target_windows:
+        browser_window = gw.getWindowsWithTitle(target_windows[0])[0]
+        browser_window.activate()
+    else:
+        # لو ما لاقاش نافذة، يفتح المتصفح
+        try:
+            if selected_browser == "Edge":
+                os.startfile("msedge.exe")
+            elif selected_browser == "Internet Explorer":
+                os.startfile("iexplore.exe")
+            elif selected_browser == "Chrome":
+                os.startfile("chrome.exe")
+            else:
+                messagebox.showerror("خطأ", f"لا أعرف كيفية فتح {selected_browser}")
+                running = False
+                return
+            time.sleep(3)  # انتظار ثواني حتى يفتح المتصفح
+        except Exception as e:
+            messagebox.showerror("خطأ", f"تعذر فتح {selected_browser}:\n{e}")
+            running = False
+            return
+    
+    threading.Thread(target=automation_loop).start()
+
+def automation_loop():
+    global running
+    try:
+        x_select = int(entry_x_select.get())
+        y_select = int(entry_y_select.get())
+        x_sign = int(entry_x_sign.get())
+        y_sign = int(entry_y_sign.get())
+        x_pass = int(entry_x_pass.get())
+        y_pass = int(entry_y_pass.get())
+        password = entry_password.get()
+        x_serach = int(entry_x_serach.get())
+        y_serach = int(entry_y_serach.get())
+
+        for i in range(400):
+            if not running:
+                break
+            time.sleep(4)
+            pyautogui.click(x_select, y_select)
+            time.sleep(6)
+            pyautogui.press("end")
+            time.sleep(3)
+            pyautogui.click(x_sign, y_sign)
+            time.sleep(6)
+            pyautogui.click(x_pass, y_pass)
+            pyautogui.typewrite(password)
+            pyautogui.press("enter")
+            time.sleep(6)
+            pyautogui.click(x_serach, y_serach)
+            time.sleep(3)
+
+        messagebox.showinfo("انتهاء", "تم تنفيذ الأوامر لجميع الأزرار (400 مرة)")
+    except Exception as e:
+        messagebox.showerror("خطأ", f"حدث خطأ أثناء التنفيذ:\n{e}")
+
+def stop_process():
+    global running
+    running = False
+    messagebox.showinfo("إيقاف", "تم إنهاء التشغيل")
+# وظيفة الحفظ
+def save_data():
+    data = {
+        "x_select": entry_x_select.get(),
+        "y_select": entry_y_select.get(),
+        "x_sign": entry_x_sign.get(),
+        "y_sign": entry_y_sign.get(),
+        "x_pass": entry_x_pass.get(),
+        "y_pass": entry_y_pass.get(),
+        "password": entry_password.get(),
+        "x_serach": entry_x_serach.get(),
+        "y_serach": entry_y_serach.get()
+    }
+    with open("saved_data.txt", "a", encoding="utf-8") as f:
+        f.write(str(data) + "\n")
+    listbox.insert(tk.END, str(data))
+
+# تحميل البيانات عند اختيار عنصر
+def load_selected(event):
+    selection = listbox.curselection()
+    if selection:
+        data_str = listbox.get(selection[0])
+        data = eval(data_str)
+        entry_x_select.delete(0, tk.END); entry_x_select.insert(0, data["x_select"])
+        entry_y_select.delete(0, tk.END); entry_y_select.insert(0, data["y_select"])
+        entry_x_sign.delete(0, tk.END); entry_x_sign.insert(0, data["x_sign"])
+        entry_y_sign.delete(0, tk.END); entry_y_sign.insert(0, data["y_sign"])
+        entry_x_pass.delete(0, tk.END); entry_x_pass.insert(0, data["x_pass"])
+        entry_y_pass.delete(0, tk.END); entry_y_pass.insert(0, data["y_pass"])
+        entry_password.delete(0, tk.END); entry_password.insert(0, data["password"])
+        entry_x_serach.delete(0, tk.END); entry_x_serach.insert(0, data["x_serach"])
+        entry_y_serach.delete(0, tk.END); entry_y_serach.insert(0, data["y_serach"])
+
+# تعديل البيانات
+def edit_data():
+    selection = listbox.curselection()
+    if selection:
+        index = selection[0]
+        new_data = {
+            "x_select": entry_x_select.get(),
+            "y_select": entry_y_select.get(),
+            "x_sign": entry_x_sign.get(),
+            "y_sign": entry_y_sign.get(),
+            "x_pass": entry_x_pass.get(),
+            "y_pass": entry_y_pass.get(),
+            "password": entry_password.get(),
+            "x_serach": entry_x_serach.get(),
+            "y_serach": entry_y_serach.get()
+        }
+        listbox.delete(index)
+        listbox.insert(index, str(new_data))
+        update_file()
+
+# حذف السطر
+def delete_data():
+    selection = listbox.curselection()
+    if selection:
+        index = selection[0]
+        listbox.delete(index)
+        update_file()
+
+# تحديث الملف
+def update_file():
+    with open("saved_data.txt", "w", encoding="utf-8") as f:
+        for i in range(listbox.size()):
+            f.write(listbox.get(i) + "\n")
+# واجهة رسومية
+root = tk.Tk()
+root.title("برنامج التوقيع الإلكتروني")
+root.geometry("1000x800")
+root.configure(bg="Light blue")
+font_style = ("Arial", 14, "bold")
+
+# اختيار المتصفح
+browser_choice = tk.StringVar(value="Edge")
+tk.Label(root, text="اختر المتصفح:", font=font_style, bg="gold").grid(row=9, column=1, padx=10, pady=5, sticky="w")
+browser_menu = tk.OptionMenu(root, browser_choice, "Edge", "Internet Explorer", "Chrome")
+browser_menu.config(font=font_style, bg="lightgreen")
+browser_menu.grid(row=9, column=0, padx=10, pady=5)
+
+# إدخالات النصوص
+tk.Label(root, text="X زر الاختيار:", font=font_style, bg="gold").grid(row=0, column=1, padx=10, pady=5, sticky="w")
+entry_x_select = tk.Entry(root, font=font_style, bg="gold"); entry_x_select.grid(row=0, column=0, padx=10, pady=5)
+
+tk.Label(root, text="Y زر الاختيار:", font=font_style, bg="gold").grid(row=1, column=1, padx=10, pady=5, sticky="w")
+entry_y_select = tk.Entry(root, font=font_style, bg="gold"); entry_y_select.grid(row=1, column=0, padx=10, pady=5)
+
+tk.Label(root, text="X زر اتمام التوقيع:", font=font_style, bg="gold").grid(row=2, column=1, padx=10, pady=5, sticky="w")
+entry_x_sign = tk.Entry(root, font=font_style, bg="gold"); entry_x_sign.grid(row=2, column=0, padx=10, pady=5)
+
+tk.Label(root, text="Y زر اتمام التوقيع:", font=font_style, bg="gold").grid(row=3, column=1, padx=10, pady=5, sticky="w")
+entry_y_sign = tk.Entry(root, font=font_style, bg="gold"); entry_y_sign.grid(row=3, column=0, padx=10, pady=5)
+
+tk.Label(root, text="X مربع الرقم السري:", font=font_style, bg="gold").grid(row=4, column=1, padx=10, pady=5, sticky="w")
+entry_x_pass = tk.Entry(root, font=font_style, bg="gold"); entry_x_pass.grid(row=4, column=0, padx=10, pady=5)
+
+tk.Label(root, text="Y مربع الرقم السري:", font=font_style, bg="gold").grid(row=5, column=1, padx=10, pady=5, sticky="w")
+entry_y_pass = tk.Entry(root, font=font_style, bg="gold"); entry_y_pass.grid(row=5, column=0, padx=10, pady=5)
+
+tk.Label(root, text="الرقم السري:", font=font_style, bg="gold").grid(row=6, column=1, padx=10, pady=5, sticky="w")
+entry_password = tk.Entry(root, font=font_style, bg="gold"); entry_password.grid(row=6, column=0, padx=10, pady=5)
+
+tk.Label(root, text="X زر البحث:", font=font_style, bg="gold").grid(row=7, column=1, padx=10, pady=5, sticky="w")
+entry_x_serach = tk.Entry(root, font=font_style, bg="gold"); entry_x_serach.grid(row=7, column=0, padx=10, pady=5)
+
+tk.Label(root, text="Y زر البحث:", font=font_style, bg="gold").grid(row=8, column=1, padx=10, pady=5, sticky="w")
+entry_y_serach = tk.Entry(root, font=font_style, bg="gold"); entry_y_serach.grid(row=8, column=0, padx=10, pady=5)
+
+# أزرار التحكم
+tk.Button(root, text="بدء التشغيل", command=start_process, width=20, height=2, font=font_style, bg="lightgreen").grid(row=0, column=2, columnspan=1, pady=5)
+tk.Button(root, text="إنهاء التشغيل", command=stop_process, width=20, height=2, font=font_style, bg="lightgreen").grid(row=1, column=2, columnspan=2, pady=5)
+tk.Button(root, text="حفظ البيانات", command=save_data, width=20, height=2, font=font_style, bg="lightgreen").grid(row=2, column=2, columnspan=2, pady=5)
+tk.Button(root, text="تعديل البيانات", command=edit_data, width=20, height=2, font=font_style, bg="lightgreen").grid(row=3, column=2, columnspan=2, pady=5)
+tk.Button(root, text="حذف السطر", command=delete_data, width=20, height=2, font=font_style, bg="lightgreen").grid(row=4, column=2, columnspan=2, pady=5)
+
+# Listbox لعرض البيانات المحفوظة
+listbox = tk.Listbox(root, width=80, height=10, font=("Arial", 12))
+listbox.grid(row=14, column=0, columnspan=2, padx=10, pady=10)
+listbox.bind("<<ListboxSelect>>", load_selected)
+
+# تحميل البيانات عند بدء التشغيل
+if os.path.exists("saved_data.txt"):
+    with open("saved_data.txt", "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                listbox.insert(tk.END, line)
+
+root.mainloop()
